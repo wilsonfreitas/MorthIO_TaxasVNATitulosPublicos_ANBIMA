@@ -1,21 +1,73 @@
 # This is a template for a Python scraper on morph.io (https://morph.io)
 # including some code snippets below that you should find helpful
 
-# import scraperwiki
-# import lxml.html
-#
-# # Read in a page
-# html = scraperwiki.scrape("http://foo.com")
-#
-# # Find something on the page using css selectors
-# root = lxml.html.fromstring(html)
-# root.cssselect("div[align='left']")
-#
-# # Write out to the sqlite database using scraperwiki library
-# scraperwiki.sqlite.save(unique_keys=['name'], data={"name": "susan", "occupation": "software developer"})
-#
-# # An arbitrary query against the database
-# scraperwiki.sql.select("* from data where 'name'='peter'")
+import scraperwiki
+import lxml.html
+
+from textparser import PortugueseRulesParser
+
+class PortugueseRulesParser2(PortugueseRulesParser):
+    def parseDate_ptBR(self, text, match):
+        r'(\d{2})/(\d{2})/(\d{4})'
+        return '{}-{}-{}'.format(match.group(3), match.group(2), match.group(1))
+
+pp = PortugueseRulesParser2()
+# Read in a page
+html = scraperwiki.scrape("http://www.anbima.com.br/vna/vna.asp")
+
+# Find something on the page using css selectors
+root = lxml.html.fromstring(html)
+
+sel = "div#listaNTN-B > center > table > tr:nth-child(2) > td:nth-child(2)"
+date = root.cssselect(sel)[0].text_content()
+sel = "div#listaNTN-B > center > table > tr:nth-child(4) > td:nth-child(3)"
+value = root.cssselect(sel)[0].text_content()
+sel = "div#listaNTN-B > center > table > tr:nth-child(4) > td:nth-child(4)"
+projecao = root.cssselect(sel)[0].text_content()
+sel = "div#listaNTN-B > center > table > tr:nth-child(4) > td:nth-child(5)"
+vigencia = root.cssselect(sel)[0].text_content()
+
+scraperwiki.sqlite.save(
+    unique_keys=['data_ref', 'taxa'],
+    data={
+        "data_ref": pp.parse(date),
+        "taxa": "IPCA",
+        "projecao": projecao,
+        "vigencia": pp.parse(vigencia),
+        "valor": pp.parse(value)
+    })
+
+sel = "div#listaNTN-C > center > table > tr:nth-child(2) > td:nth-child(2)"
+date = root.cssselect(sel)[0].text_content()
+sel = "div#listaNTN-C > center > table > tr:nth-child(4) > td:nth-child(3)"
+value = root.cssselect(sel)[0].text_content()
+sel = "div#listaNTN-C > center > table > tr:nth-child(4) > td:nth-child(4)"
+projecao = root.cssselect(sel)[0].text_content()
+sel = "div#listaNTN-C > center > table > tr:nth-child(4) > td:nth-child(5)"
+vigencia = root.cssselect(sel)[0].text_content()
+
+scraperwiki.sqlite.save(
+    unique_keys=['data_ref', 'taxa'],
+    data={
+        "data_ref": pp.parse(date),
+        "taxa": "IGPM",
+        "projecao": projecao,
+        "vigencia": pp.parse(vigencia),
+        "valor": pp.parse(value)
+    })
+
+sel = "div#listaLFT > center > table > tr:nth-child(2) > td:nth-child(2)"
+date = root.cssselect(sel)[0].text_content()
+sel = "div#listaLFT > center > table > tr:nth-child(4) > td:nth-child(3)"
+value = root.cssselect(sel)[0].text_content()
+
+scraperwiki.sqlite.save(
+    unique_keys=['data_ref', 'taxa'],
+    data={
+        "data_ref": pp.parse(date),
+        "taxa": "SELIC",
+        "valor": pp.parse(value)
+    })
 
 # You don't have to do things with the ScraperWiki and lxml libraries.
 # You can use whatever libraries you want: https://morph.io/documentation/python
